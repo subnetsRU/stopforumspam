@@ -1,0 +1,91 @@
+--- ucp_register.php.orig	2016-02-18 20:04:00.000000000 +0300
++++ ucp_register.php	2016-03-22 12:08:46.259106000 +0300
+@@ -258,6 +258,14 @@
+ 				if ($config['max_reg_attempts'] && $captcha->get_attempt_count() > $config['max_reg_attempts'])
+ 				{
+ 					$error[] = $user->lang['TOO_MANY_REGISTERS'];
++					/*
++					    StopForumSpam.SUBNETS.RU MOD
++
++					    (c) 2015 SUBNETS.RU project (Moscow, Russia)
++					    Authors: Nikolaev Dmitry <virus@subnets.ru>, Panfilov Alexey <lehis@subnets.ru>
++					*/
++					$tooManyRegisters=1;
++					//MOD end
+ 				}
+ 			}
+ 
+@@ -503,6 +511,73 @@
+ 			break;
+ 		}
+ 
++		/*
++		    StopForumSpam.SUBNETS.RU MOD
++
++		    (c) 2015 SUBNETS.RU project (Moscow, Russia)
++		    Authors: Nikolaev Dmitry <virus@subnets.ru>, Panfilov Alexey <lehis@subnets.ru>
++		*/
++		if(isset($submit) && $submit){
++		    $apiClient=sprintf("%sstopforumspam/stopforumspam_api.php",$phpbb_root_path);
++		    if (@is_file($apiClient)){
++			include_once($apiClient);
++			if (!defined('StopForumSpam_HIT_COUNTER')){
++			    define('StopForumSpam_HIT_COUNTER','2');
++			}
++			$stopForumSpamData=$stopForumSpamHitCounter=0;
++			$stopForumSpamRequestData=array();
++
++			if (isset($data['username']) && $data['username']){
++			    $stopForumSpamRequestData['username']=$data['username'];
++			}
++			if (isset($data['email']) && $data['email']){
++			    $stopForumSpamRequestData['email']=$data['email'];
++			}
++			$remoteAddr=$request->server('REMOTE_ADDR', '');
++			if (preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/",$remoteAddr)){		//Only IPv4 support for now
++			    $stopForumSpamRequestData['ip_addr']=$remoteAddr;
++			}
++
++			if (count($stopForumSpamRequestData)>0){
++			    $stopForumSpamData=stopForumSpamApi_check($stopForumSpamRequestData);
++			    if ( (int)$stopForumSpamData > 0 ){
++				if ( (int)StopForumSpam_HIT_COUNTER > 0 && ( (int)$stopForumSpamData >= StopForumSpam_HIT_COUNTER )){
++				    $stopForumSpamHitCounter=$stopForumSpamData;
++				}
++			    }
++			}
++			if (isset($error) && is_array($error) && count($error)>0){
++			    $myData=$data+$cp_data;
++			    if (isset($myData['username']) && isset($myData['email']) && $myData['username'] && $myData['email']){
++				$stopForumSpamImportData=array();
++				$stopForumSpamImportData['username']=$myData['username'];
++				if (isset($stopForumSpamRequestData['ip_addr']) && $stopForumSpamRequestData['ip_addr']){
++				    $stopForumSpamImportData['ip_addr']=$stopForumSpamRequestData['ip_addr'];
++				}
++				$stopForumSpamImportData['email']=$myData['email'];
++				$stopForumSpamImportData['evidence']=isset($tooManyRegisters) ? "To many register attempts" : ($stopForumSpamHitCounter > 0 ? "stopForumSpamHitCounter: ".$stopForumSpamHitCounter : $error[0]);
++				stopForumSpamApi_import( $stopForumSpamImportData );
++			    }
++			}
++
++			if ($stopForumSpamHitCounter > 0){
++				stopForumSpam_logg("Sending to 404");
++				header("HTTP/1.0 404 Not Found");
++				header("HTTP/1.1 404 Not Found");
++				header("Status: 404 Not Found");
++				print "404 Not Found";
++				die();
++			}
++
++			if (isset($tooManyRegisters)){
++			    stopForumSpam_logg("Sending to ucp_register_FAILED");
++			    $this->tpl_name = 'ucp_register_FAILED';
++			    return;
++			}
++		    }
++		}
++		//MOD end
++
+ 		$timezone_selects = phpbb_timezone_select($template, $user, $data['tz'], true);
+ 		$template->assign_vars(array(
+ 			'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',

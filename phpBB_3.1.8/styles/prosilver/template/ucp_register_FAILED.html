@@ -1,0 +1,37 @@
+<!-- INCLUDE overall_header.html -->
+
+<script type="text/javascript">
+// <![CDATA[
+	/**
+	* Change language
+	*/
+	function change_language(lang_iso)
+	{
+		document.cookie = '{COOKIE_NAME}_lang=' + lang_iso + '; path={COOKIE_PATH}';
+		document.forms['register'].change_lang.value = lang_iso;
+		document.forms['register'].submit.click();
+	}
+// ]]>
+</script>
+
+<div class="panel">
+	<div class="inner">
+
+	<h2>{SITENAME} - {L_REGISTRATION}</h2>
+
+	<div class="panel">
+	    <div class="inner"><span class="corners-top"><span></span></span>
+	    <fieldset class="fields2">
+		<p>
+		    <font color="red"><b>Слишком много ошибок при регистрации... Попробуйте позднее.</b></font>
+		</p>
+		<p>
+		    <font color="red"><b>Too many register errors... Try again later</b></font>
+		</p>
+	    </fieldset>
+	    <span class="corners-bottom"><span></span></span></div>
+	    </div>
+	</div>
+</div>
+
+<!-- INCLUDE overall_footer.html -->
