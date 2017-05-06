@@ -44,10 +44,20 @@ function stopForumSpamApi_check( $stopForumSpamRequestData ){
 	    }
 	    $request=stopForumSpamApi_request( $stopForumSpamTotalData );
 
-	    if ($request[0]==1){
-		//Request is successfull
-		$stopForumSpamReturnData=isset($request[1]['rows']) ? $request[1]['rows'] : 0;
-	    }else{
+        if ($request[0]==1) { // Request is successfull
+            $stopForumSpamReturnData = 0; // default
+            if (isset($request[1]['rows']) && (int)$request[1]['rows'] > 0) {
+                $stopForumSpamReturnData = (int)$request[1]['rows'];
+                // если требуется, проверка наличия email в базе
+                if (StopForumSpam_EMAIL_CATEGORICAL === 1) {
+                    foreach ($request[1]['data']['row'] as $v) {
+                        if ($v['type'] == 'email') {
+                            $stopForumSpamReturnData = 3;
+                        }
+                    }
+                }
+            }
+        } else {
 		//Request return error
 		stopForumSpam_logg("Request ERROR occur");
 	    }
