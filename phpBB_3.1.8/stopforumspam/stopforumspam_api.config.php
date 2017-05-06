@@ -34,8 +34,8 @@ define( 'StopForumSpam_HIT_COUNTER','2');		//Кол-во совпадений д
 							    //2 - два совпадения по базе (любые два из: username, email, ip)
 							    //3 - три совпадения по базе (все три: username, email, ip)
 
-define( 'StopForumSpam_EMAIL_CATEGORICAL', 1);        // Если email найден в базе
-							// Возможные значения:
-							    // 0 - игнорирование (применяются другие методы блокировки)
-							    // 1 - блокировать, не обращая внимания на другие опции
+define( 'StopForumSpam_EMAIL_CATEGORICAL', '1' );	//Если email найден в базе, то не учитываем другие условия по совпадениям
+							//Возможные значения:
+							    //0 - игнорирование, учитывается StopForumSpam_HIT_COUNTER
+							    //1 - блокировать, не обращаем внимания на StopForumSpam_HIT_COUNTER
 ?>

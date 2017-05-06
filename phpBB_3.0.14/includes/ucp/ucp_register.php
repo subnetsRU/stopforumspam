@@ -469,7 +469,7 @@ class ucp_register
 		    if (@is_file($apiClient)){
 			include_once($apiClient);
 			if (!defined('StopForumSpam_HIT_COUNTER')){
-			    define('StopForumSpam_HIT_COUNTER','1');
+			    define('StopForumSpam_HIT_COUNTER','0');
 			}
 			$stopForumSpamData=$stopForumSpamHitCounter=0;
 			$stopForumSpamRequestData=array();

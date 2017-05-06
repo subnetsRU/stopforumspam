@@ -4,6 +4,7 @@
     PHP client
 
     Versions: 
+	0.1.2 (from 06.05.2018): Pull request: Implemented an categorical check email
 	0.1.1 (from 12.11.2015): First version
 	0.1.0 (from 05.11.2015): First version
 
@@ -11,7 +12,7 @@
     Authors: Nikolaev Dmitry <virus@subnets.ru>, Panfilov Alexey <lehis@subnets.ru>
 */
 
-define( 'StopForumSpam_API_CLIENT_VER','0.1.1' );
+define( 'StopForumSpam_API_CLIENT_VER','0.1.2' );
 define( 'StopForumSpam_API_URL','http://stopforumspam.subnets.ru/api/query.php' );
 
 error_reporting(E_ALL & ~E_STRICT);
@@ -29,6 +30,13 @@ if (is_file($path_config)){
 
 function stopForumSpamApi_check( $stopForumSpamRequestData ){
     //Request for data
+    if (!defined('StopForumSpam_HIT_COUNTER')){
+	define('StopForumSpam_HIT_COUNTER','0');
+    }
+    if (!defined('StopForumSpam_EMAIL_CATEGORICAL')){
+	define('StopForumSpam_EMAIL_CATEGORICAL','0');
+    }
+
     $stopForumSpamReturnData=0;
     if (!stopForumSpamApi_system_requirements_check()){
 	if (isset($stopForumSpamRequestData) && is_array($stopForumSpamRequestData) && count($stopForumSpamRequestData)>0){
@@ -43,21 +51,22 @@ function stopForumSpamApi_check( $stopForumSpamRequestData ){
 		$stopForumSpamTotalData[$k]=$v;
 	    }
 	    $request=stopForumSpamApi_request( $stopForumSpamTotalData );
-
-        if ($request[0]==1) { // Request is successfull
-            $stopForumSpamReturnData = 0; // default
-            if (isset($request[1]['rows']) && (int)$request[1]['rows'] > 0) {
-                $stopForumSpamReturnData = (int)$request[1]['rows'];
-                // если требуется, проверка наличия email в базе
-                if (StopForumSpam_EMAIL_CATEGORICAL === 1) {
-                    foreach ($request[1]['data']['row'] as $v) {
-                        if ($v['type'] == 'email') {
-                            $stopForumSpamReturnData = 3;
-                        }
-                    }
-                }
-            }
-        } else {
+	    if ($request[0]==1) {
+		//Request is successfull
+        	$stopForumSpamReturnData = 0; // default
+        	if (isset($request[1]['rows']) && (int)$request[1]['rows'] > 0) {
+        	    $stopForumSpamReturnData = (int)$request[1]['rows'];
+            	    //если email в базе, то не учитываем StopForumSpam_HIT_COUNTER, а считаем это 100% совпадением
+            	    if (StopForumSpam_HIT_COUNTER > 0 && StopForumSpam_EMAIL_CATEGORICAL === 1) {
+                	foreach ($request[1]['data']['row'] as $v) {
+                    	    if ($v['type'] == 'email') {
+                        	$stopForumSpamReturnData = StopForumSpam_HIT_COUNTER;
+                        	break;
+                    	    }
+                	}
+            	    }
+        	}
+    	    } else {
 		//Request return error
 		stopForumSpam_logg("Request ERROR occur");
 	    }
